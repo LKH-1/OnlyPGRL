@@ -34,20 +34,18 @@ class a2c:
 
     def learn(self, state, next_state, reward, action):
         v_ = self.sess.run(self.critic, feed_dict={self.X: next_state})
-        _ = self.sess.run(self.train_cop,
-                          feed_dict={self.X: state, self.v_: v_, self.r: reward})
-        _ = self.sess.run(self.train_aop,
-                            feed_dict={self.X: state, self.a: action, self.r: reward})
+        _, _ = self.sess.run([self.train_cop, self.train_aop],
+                          feed_dict={self.X: state, self.v_: v_, self.r: reward, self.a: action})
 
     def _bulid_net(self):
-        net = tf.layers.dense(self.X, 24, activation=tf.nn.relu)
-        net = tf.layers.dense(net, 24, activation=tf.nn.relu)
+        net = tf.layers.dense(self.X, 24, activation=tf.nn.tanh)
+        net = tf.layers.dense(net, 24, activation=tf.nn.tanh)
 
         actor = tf.layers.dense(net, 24, activation=tf.nn.relu)
         actor = tf.layers.dense(actor, self.action_size, activation=tf.nn.softmax)
 
-        critic = tf.layers.dense(net, 24, activation=tf.nn.tanh)
-        critic = tf.layers.dense(critic, 1, activation=None)
+        critic = tf.layers.dense(net, 24, activation=tf.nn.tanh, trainable=True)
+        critic = tf.layers.dense(critic, 1, activation=None, trainable=True)
 
         return actor, critic
 
@@ -61,7 +59,12 @@ A2C = a2c(sess, 4, 2)
 sess.run(tf.global_variables_initializer())
 env = gym.make('CartPole-v0')
 
-for episodes in range(100):
+spend_time = tf.placeholder(tf.float32)
+rr = tf.summary.scalar('reward', spend_time)
+merged = tf.summary.merge_all()
+writer = tf.summary.FileWriter('./board/a2c', sess.graph)
+
+for episodes in range(1000):
     done = False
     state = env.reset()
     states = np.empty(shape=[0, 4])
@@ -72,7 +75,6 @@ for episodes in range(100):
     while not done:
         t += 1
         action_pred = A2C.choose_action(state)
-        print(action_pred)
         next_state, reward, done, _ = env.step(action_pred)
         if done:
             reward = -1
@@ -89,4 +91,6 @@ for episodes in range(100):
         if done:
             discounted_rewards = disconut_rewards(rewards)
             A2C.learn(states, next_states, discounted_rewards, actions)
+            summary = sess.run(merged, feed_dict={spend_time: t})
+            writer.add_summary(summary, episodes)
             print(episodes, t)
