@@ -10,18 +10,14 @@ GAMMA = 0.95
 
 def main():
     env = gym.make('CartPole-v0')
-    env.seed(0)
-    ob_space = env.observation_space
     Policy = Policy_net('policy', 4, 2)
     Old_Policy = Policy_net('old_policy', 4, 2)
     PPO = PPOTrain(Policy, Old_Policy, gamma=GAMMA)
-    saver = tf.train.Saver()
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         obs = env.reset()
         reward = 0
-        success_num = 0
 
         for iteration in range(ITERATION):  # episode
             observations = []
@@ -38,12 +34,13 @@ def main():
                 act = np.asscalar(act)
                 v_pred = np.asscalar(v_pred)
 
+                next_obs, reward, done, info = env.step(act)
+
                 observations.append(obs)
                 actions.append(act)
                 v_preds.append(v_pred)
                 rewards.append(reward)
 
-                next_obs, reward, done, info = env.step(act)
 
                 if done:
                     v_preds_next = v_preds[1:] + [0]  # next state of terminate state has 0 state value
@@ -67,7 +64,7 @@ def main():
             inp = [observations, actions, rewards, v_preds_next, gaes]
 
             # train
-            for epoch in range(4):
+            for epoch in range(10):
                 sample_indices = np.random.randint(low=0, high=observations.shape[0], size=64)  # indices are in [low, high)
                 sampled_inp = [np.take(a=a, indices=sample_indices, axis=0) for a in inp]  # sample training data
                 PPO.train(obs=sampled_inp[0],
