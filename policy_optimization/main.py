@@ -36,6 +36,9 @@ def main():
 
                 next_obs, reward, done, info = env.step(act)
 
+                if done:
+                    reward = -1
+                    
                 observations.append(obs)
                 actions.append(act)
                 v_preds.append(v_pred)
@@ -44,7 +47,6 @@ def main():
 
                 if done:
                     v_preds_next = v_preds[1:] + [0]  # next state of terminate state has 0 state value
-                    reward = -1
                     break
                 else:
                     obs = next_obs
