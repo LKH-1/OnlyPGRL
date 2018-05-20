@@ -13,6 +13,10 @@ Old_Policy = Policy_network(sess, 'old_policy', 4, 2)
 PPO = PPOTrain(sess, Policy, Old_Policy, gamma=0.95)
 sess.run(tf.global_variables_initializer())
 
+spend_time = tf.placeholder(tf.float32)
+rr = tf.summary.scalar('reward', spend_time)
+merged = tf.summary.merge_all()
+writer = tf.summary.FileWriter('./board/tanh_softmax&tanh_None', sess.graph)
 for episodes in range(1000):
     observations = []
     actions = []
@@ -59,4 +63,6 @@ for episodes in range(1000):
                           rewards=sampled_inp[2],
                           v_preds_next=sampled_inp[3],
                           gaes=sampled_inp[4])
+    summary = sess.run(merged, feed_dict={spend_time: t})
+    writer.add_summary(summary, episodes)
     print(episodes, t)

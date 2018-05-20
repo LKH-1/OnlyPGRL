@@ -9,15 +9,16 @@ class Policy_network:
 
         with tf.variable_scope(name):
             self.x = tf.placeholder(tf.float32, [None, self.state_size], name='obs')
-            net = tf.layers.dense(self.x, 32, activation=tf.tanh)
-            net = tf.layers.dense(net, 32, activation=tf.tanh)
+
             with tf.variable_scope('policy_net'):
-                anet = tf.layers.dense(net, self.action_size, activation=tf.tanh)
+                anet = tf.layers.dense(self.x, 32, activation=tf.tanh)
+                anet = tf.layers.dense(anet, self.action_size, activation=tf.tanh)
                 self.act_probs = tf.layers.dense(tf.divide(anet, 0.1), self.action_size, activation=tf.nn.softmax)
 
             with tf.variable_scope('value_net'):
-                cnet = tf.layers.dense(net, 32, activation=tf.tanh)
-                self.v_preds = tf.layers.dense(net, 1, activation=None)
+                cnet = tf.layers.dense(self.x, 32, activation=tf.tanh)
+                cnet = tf.layers.dense(cnet, 32, activation=tf.tanh)
+                self.v_preds = tf.layers.dense(cnet, 1, activation=None)
 
             self.act_stochastic = tf.multinomial(tf.log(self.act_probs), num_samples=1)
             self.act_stochastic = tf.reshape(self.act_stochastic, shape=[-1])
