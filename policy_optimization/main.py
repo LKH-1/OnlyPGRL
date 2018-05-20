@@ -17,7 +17,7 @@ spend_time = tf.placeholder(tf.float32)
 rr = tf.summary.scalar('reward', spend_time)
 merged = tf.summary.merge_all()
 writer = tf.summary.FileWriter('./board/tanh_softmax&tanh_None', sess.graph)
-for episodes in range(1000):
+for episodes in range(200):
     observations = []
     actions = []
     v_preds = []
@@ -52,7 +52,6 @@ for episodes in range(1000):
     gaes = np.array(gaes).astype(dtype=np.float32)
     gaes = (gaes - gaes.mean()) / gaes.std()
 
-    
     PPO.assign_policy_parameters()
     inp = [observations, actions, rewards, v_preds_next, gaes]
     for epoch in range(4):

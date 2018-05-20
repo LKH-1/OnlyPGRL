@@ -51,7 +51,7 @@ class PPOTrain:
             loss = loss_clip - c_1 * loss_vf + c_2 * entropy
             loss = -loss
 
-        self.train_op = tf.train.AdamOptimizer(learning_rate=1e-4, epsilon=1e-5).minimize(loss, var_list=pi_trainable)
+        self.train_op = tf.train.AdamOptimizer(learning_rate=0.01).minimize(loss, var_list=pi_trainable)
 
     def train(self, obs, actions, rewards, v_preds_next, gaes):
         return self.sess.run(self.train_op, feed_dict={

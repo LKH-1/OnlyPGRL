@@ -11,13 +11,15 @@ class Policy_network:
             self.x = tf.placeholder(tf.float32, [None, self.state_size], name='obs')
 
             with tf.variable_scope('policy_net'):
-                anet = tf.layers.dense(self.x, 32, activation=tf.tanh)
-                anet = tf.layers.dense(anet, self.action_size, activation=tf.tanh)
+                anet = tf.layers.dense(self.x, 32, activation=tf.tanh, kernel_initializer=tf.contrib.layers.xavier_initializer())
+                anet = tf.layers.dense(anet, 32, activation=tf.tanh, kernel_initializer=tf.contrib.layers.xavier_initializer())
+                anet = tf.layers.dense(anet, self.action_size, activation=tf.tanh, kernel_initializer=tf.contrib.layers.xavier_initializer())
                 self.act_probs = tf.layers.dense(tf.divide(anet, 0.1), self.action_size, activation=tf.nn.softmax)
 
             with tf.variable_scope('value_net'):
-                cnet = tf.layers.dense(self.x, 32, activation=tf.tanh)
-                cnet = tf.layers.dense(cnet, 32, activation=tf.tanh)
+                cnet = tf.layers.dense(self.x, 32, activation=tf.tanh, kernel_initializer=tf.contrib.layers.xavier_initializer())
+                cnet = tf.layers.dense(cnet, 32, activation=tf.tanh, kernel_initializer=tf.contrib.layers.xavier_initializer())
+                cnet = tf.layers.dense(cnet, 32, activation=tf.tanh, kernel_initializer=tf.contrib.layers.xavier_initializer())
                 self.v_preds = tf.layers.dense(cnet, 1, activation=None)
 
             self.act_stochastic = tf.multinomial(tf.log(self.act_probs), num_samples=1)
