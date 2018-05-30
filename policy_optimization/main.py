@@ -12,7 +12,7 @@ with tf.Session() as sess:
     Old_Policy = Policy_net('old_policy', 4, 2)
     PPO = PPOTrain(Policy, Old_Policy, gamma=0.95)
     sess.run(tf.global_variables_initializer())
-
+    first_episodes = 0
     for episodes in range(1000):
         observations = []
         actions = []
@@ -57,4 +57,6 @@ with tf.Session() as sess:
                             rewards=sampled_inp[2],
                             v_preds_next=sampled_inp[3],
                             gaes=sampled_inp[4])
-        print(episodes, t)
+        if t == 200:
+            first_episodes = episodes
+        print(episodes, t, first_episodes)
