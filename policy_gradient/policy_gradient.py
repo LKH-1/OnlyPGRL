@@ -3,10 +3,11 @@ import numpy as np
 import gym
 
 class PG:
-    def __init__(self, sess, state_size, action_size):
+    def __init__(self, sess, state_size, action_size, exp_rate):
         self.sess = sess
         self.state_size = state_size
         self.action_size = action_size
+        self.exp_rate = exp_rate
 
         self.X = tf.placeholder(tf.float32, [None, self.state_size])
         self.advantages = tf.placeholder(tf.float32, [None, 1])
@@ -23,9 +24,11 @@ class PG:
         return action_prob
 
     def train(self):
-        log_lik = -self.Y*tf.log(self.network)
+        log_lik = self.Y*tf.log(self.network)
         log_lik_adv = log_lik * self.advantages
-        loss = tf.reduce_mean(tf.reduce_sum(log_lik_adv, axis = 1))
+        obj_func = tf.reduce_mean(tf.reduce_sum(log_lik_adv, axis = 1))
+        entropy = -tf.reduce_sum(self.network * tf.log(self.network))
+        loss = -(obj_func + self.exp_rate*entropy)
         train = tf.train.AdamOptimizer(0.01).minimize(loss)
         return train
 
@@ -43,12 +46,18 @@ def discount_rewards(r):
     discounted_r = (discounted_r - discounted_r.mean())/(discounted_r.std() + 1e-7)
     return discounted_r
 
-env = gym.make('CartPole-v0')
+env = gym.make('CartPole-v1')
 sess = tf.Session()
-pg = PG(sess, 4, 2)
+pg = PG(sess, 4, 2, 0.0001)
 sess.run(tf.global_variables_initializer())
 
-for i in range(200):
+r = tf.placeholder(tf.float32)
+rr = tf.summary.scalar('reward', r)
+merged = tf.summary.merge_all()
+
+writer = tf.summary.FileWriter('./board/pg', sess.graph)
+
+for i in range(600):
     xs = np.empty(shape=[0, 4])
     ys = np.empty(shape=[0, 2])
     rewards = np.empty(shape=[0, 1])
@@ -74,5 +83,6 @@ for i in range(200):
         if done:
             discounted_rewards = discount_rewards(rewards)
             _ = sess.run(pg.atrain, feed_dict={pg.X: xs, pg.Y: ys, pg.advantages: discounted_rewards})
-
+            summary = sess.run(merged, feed_dict={r: t})
+            writer.add_summary(summary, i)
             print(i, t)

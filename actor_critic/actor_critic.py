@@ -12,10 +12,11 @@ def disconut_rewards(r):
     return discounted_r
 
 class a2c:
-    def __init__(self, sess, state_size, action_size):
+    def __init__(self, sess, state_size, action_size, exp_rate):
         self.sess = sess
         self.state_size = state_size
         self.action_size = action_size
+        self.exp_rate = exp_rate
 
         self.X = tf.placeholder(tf.float32, [None, self.state_size])
         self.a = tf.placeholder(tf.float32, [None, self.action_size])
@@ -27,10 +28,13 @@ class a2c:
         self.closs = tf.square(self.td_error)
         self.train_cop = tf.train.AdamOptimizer(0.001).minimize(self.closs)
 
-        self.log_lik = -self.a * tf.log(self.actor)
+        self.log_lik = self.a * tf.log(self.actor)
         self.log_lik_adv = self.log_lik * self.td_error
         self.exp_v = tf.reduce_mean(tf.reduce_sum(self.log_lik_adv, axis=1))
-        self.train_aop = tf.train.AdamOptimizer(0.001).minimize(self.exp_v)
+        self.entropy = -tf.reduce_sum(self.actor * tf.log(self.actor))
+        self.obj_func = self.exp_v + self.exp_rate * self.entropy
+        self.loss = -self.obj_func
+        self.train_aop = tf.train.AdamOptimizer(0.001).minimize(self.loss)
 
     def learn(self, state, next_state, reward, action):
         v_ = self.sess.run(self.critic, feed_dict={self.X: next_state})
@@ -55,14 +59,14 @@ class a2c:
         return action
 
 sess = tf.Session()
-A2C = a2c(sess, 4, 2)
+A2C = a2c(sess, 4, 2, 0.00001)
 sess.run(tf.global_variables_initializer())
-env = gym.make('CartPole-v0')
+env = gym.make('CartPole-v1')
 
 spend_time = tf.placeholder(tf.float32)
 rr = tf.summary.scalar('reward', spend_time)
 merged = tf.summary.merge_all()
-writer = tf.summary.FileWriter('./board/a2c', sess.graph)
+writer = tf.summary.FileWriter('./board/a2c_low_exp', sess.graph)
 
 for episodes in range(1000):
     done = False
