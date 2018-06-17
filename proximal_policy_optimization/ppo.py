@@ -3,7 +3,7 @@ import numpy as np
 
 class PPO(object):
 
-    def __init__(self, act_range, METHOD, A_LR, C_LR, S_DIM, A_DIM, A_UPDATE_STEPS, C_UPDATE_STEPS):
+    def __init__(self, sess, act_range, METHOD, A_LR, C_LR, S_DIM, A_DIM, A_UPDATE_STEPS, C_UPDATE_STEPS):
 
         self.act_range = act_range
         self.METHOD = METHOD
@@ -14,7 +14,7 @@ class PPO(object):
         self.A_UPDATE_STEPS = A_UPDATE_STEPS
         self.C_UPDATE_STEPS = C_UPDATE_STEPS
 
-        self.sess = tf.Session()
+        self.sess = sess
         self.tfs = tf.placeholder(tf.float32, [None, self.S_DIM], 'state')
 
         # critic
@@ -56,7 +56,7 @@ class PPO(object):
 
         tf.summary.FileWriter("log/", self.sess.graph)
 
-        self.sess.run(tf.global_variables_initializer())
+        #self.sess.run(tf.global_variables_initializer())
 
     def update(self, s, a, r):
         self.sess.run(self.update_oldpi_op)

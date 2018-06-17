@@ -8,6 +8,7 @@ env = gym.make('CartPole-v0')
 state_size = 4
 action_space = 2
 with tf.Session() as sess:
+    tf.set_random_seed(1234)
     Policy = Policy_net('policy', 4, 2)
     Old_Policy = Policy_net('old_policy', 4, 2)
     PPO = PPOTrain(Policy, Old_Policy, gamma=0.95)

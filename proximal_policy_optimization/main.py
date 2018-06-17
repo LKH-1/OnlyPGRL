@@ -20,9 +20,11 @@ METHOD = [
     dict(name='clip', epsilon=0.2),                 # Clipped surrogate objective, find this is better
 ][1]        # choose the method for optimization
 
-
+sess = tf.Session()
+tf.set_random_seed(1234)
 env = gym.make('Pendulum-v0').unwrapped
-ppo = PPO(2, METHOD, A_LR, C_LR, S_DIM, A_DIM, A_UPDATE_STEPS, C_UPDATE_STEPS)
+ppo = PPO(sess, 2, METHOD, A_LR, C_LR, S_DIM, A_DIM, A_UPDATE_STEPS, C_UPDATE_STEPS)
+sess.run(tf.global_variables_initializer())
 all_ep_r = []
 
 for ep in range(EP_MAX):
