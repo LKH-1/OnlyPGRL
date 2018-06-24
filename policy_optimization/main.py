@@ -4,7 +4,7 @@ import tensorflow as tf
 from policy_net import Policy_net
 from ppo import PPOTrain
 
-env = gym.make('CartPole-v0')
+env = gym.make('CartPole-v1')
 state_size = 4
 action_space = 2
 with tf.Session() as sess:
@@ -23,7 +23,9 @@ with tf.Session() as sess:
         t = 0
         reward = 0
         done = False
-        while not done:
+        while not done:       
+            if episodes % 10 == 0:
+                env.render()
             t += 1
             act, v_pred = Policy.act([state], stochastic=True)
             act, v_pred = np.asscalar(act), np.asscalar(v_pred)
