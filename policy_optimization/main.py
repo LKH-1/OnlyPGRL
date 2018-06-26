@@ -17,7 +17,7 @@ with tf.Session() as sess:
     tf.set_random_seed(1234)
     Policy = Policy_net('policy', 4, 2)
     Old_Policy = Policy_net('old_policy', 4, 2)
-    PPO = PPOTrain(Policy, Old_Policy, gamma=0.95, mode='clip') # mode = 'clip' or 'kl_pen'
+    PPO = PPOTrain(Policy, Old_Policy, gamma=0.95, mode='kl_pen') # mode = 'clip' or 'kl_pen'
     sess.run(tf.global_variables_initializer())
     first_episodes = 0
     for episodes in range(500):

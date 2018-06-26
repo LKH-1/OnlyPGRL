@@ -33,15 +33,15 @@ class PPOTrain:
             self.v_preds_next = tf.placeholder(dtype=tf.float32, shape=[None], name='v_preds_next')
             self.gaes = tf.placeholder(dtype=tf.float32, shape=[None], name='gaes')
 
-        act_probs = self.Policy.act_probs
-        act_probs_old = self.Old_Policy.act_probs
+        act_probs_prob = self.Policy.act_probs
+        act_probs_old_prob = self.Old_Policy.act_probs
 
         # probabilities of actions which agent took with policy
-        act_probs = act_probs * tf.one_hot(indices=self.actions, depth=act_probs.shape[1])
+        act_probs = act_probs_prob * tf.one_hot(indices=self.actions, depth=act_probs_prob.shape[1])
         act_probs = tf.reduce_sum(act_probs, axis=1)
 
         # probabilities of actions which agent took with old policy
-        act_probs_old = act_probs_old * tf.one_hot(indices=self.actions, depth=act_probs_old.shape[1])
+        act_probs_old = act_probs_old_prob * tf.one_hot(indices=self.actions, depth=act_probs_old_prob.shape[1])
         act_probs_old = tf.reduce_sum(act_probs_old, axis=1)
 
         with tf.variable_scope('loss/clip'):
@@ -53,11 +53,11 @@ class PPOTrain:
             if self.mode == 'kl_pen':
                 ratios = tf.exp(tf.log(act_probs) - tf.log(act_probs_old))
                 surr = self.gaes * ratios
-                act_probs = tf.distributions.Categorical(act_probs)
-                act_probs_old = tf.distributions.Categorical(act_probs_old)
+                act_probs = tf.distributions.Categorical(probs=act_probs_prob)
+                act_probs_old = tf.distributions.Categorical(probs=act_probs_old_prob)
                 kl = tf.distributions.kl_divergence(act_probs_old, act_probs)
                 self.kl_mean = tf.reduce_mean(kl)
-                loss_clip = tf.reduce_mean(surr - 0.3 * kl)
+                loss_clip = tf.reduce_mean(surr - 0.2 * kl)
 
             tf.summary.scalar('loss_clip', loss_clip)
 
