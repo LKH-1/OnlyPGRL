@@ -3,7 +3,7 @@ import copy
 
 
 class PPOTrain:
-    def __init__(self, Policy, Old_Policy, gamma=0.95, clip_value=0.2, c_1=1, c_2=0.01):
+    def __init__(self, Policy, Old_Policy, mode, gamma=0.95, clip_value=0.2, c_1=1, c_2=0.01):
         """
         :param Policy:
         :param Old_Policy:
@@ -12,7 +12,7 @@ class PPOTrain:
         :param c_1: parameter for value difference
         :param c_2: parameter for entropy bonus
         """
-
+        self.mode = mode
         self.Policy = Policy
         self.Old_Policy = Old_Policy
         self.gamma = gamma
@@ -45,11 +45,20 @@ class PPOTrain:
         act_probs_old = tf.reduce_sum(act_probs_old, axis=1)
 
         with tf.variable_scope('loss/clip'):
-            # ratios = tf.divide(act_probs, act_probs_old)
-            ratios = tf.exp(tf.log(act_probs) - tf.log(act_probs_old))
-            clipped_ratios = tf.clip_by_value(ratios, clip_value_min=1 - clip_value, clip_value_max=1 + clip_value)
-            loss_clip = tf.minimum(tf.multiply(self.gaes, ratios), tf.multiply(self.gaes, clipped_ratios))
-            loss_clip = tf.reduce_mean(loss_clip)
+            if self.mode == 'clip':
+                ratios = tf.exp(tf.log(act_probs) - tf.log(act_probs_old))
+                clipped_ratios = tf.clip_by_value(ratios, clip_value_min=1 - clip_value, clip_value_max=1 + clip_value)
+                loss_clip = tf.minimum(tf.multiply(self.gaes, ratios), tf.multiply(self.gaes, clipped_ratios))
+                loss_clip = tf.reduce_mean(loss_clip)
+            if self.mode == 'kl_pen':
+                ratios = tf.exp(tf.log(act_probs) - tf.log(act_probs_old))
+                surr = self.gaes * ratios
+                act_probs = tf.distributions.Categorical(act_probs)
+                act_probs_old = tf.distributions.Categorical(act_probs_old)
+                kl = tf.distributions.kl_divergence(act_probs_old, act_probs)
+                self.kl_mean = tf.reduce_mean(kl)
+                loss_clip = tf.reduce_mean(surr - 0.3 * kl)
+
             tf.summary.scalar('loss_clip', loss_clip)
 
         # construct computation graph for loss of value function
